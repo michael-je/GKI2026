@@ -45,14 +45,15 @@ history, targets = load_training_data()
 ## Einkunnagjöf
 
 ```
-Einkunn = max(0, 100 × (1 - villa_þín / grunnlínu_villa))
+Einkunn = weighted_average_over_sensors(1 - RMSE_model / RMSE_baseline)
 ```
 
 | Einkunn | Merking |
 |---------|---------|
 | 0 | Sama og grunnlína |
-| 50 | Hálfur villufjöldi |
-| 100 | Fullkomin spá |
+| > 0 | Betri en grunnlína |
+| < 0 | Verri en grunnlína |
+| 1 | Besta núverandi spá í keppninni |
 
 ## Fljótleg byrjun
 

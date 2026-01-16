@@ -87,13 +87,34 @@ Líkanið er metið á því hversu vel það spáir næsta bætinu:
 1. Fyrir hverja stöðu í prófunargögnum fær líkanið síðustu 512 bæt sem samhengi
 2. Líkanið skilar logits (ónormeraðar líkur) fyrir öll 256 mögulegu bæt
 3. Reiknaður er kross-entropy tap: `-log2(softmax(logits)[rétta_bætið])`
-4. Lokaniðurstaða = meðal bita-fyrir-bæti yfir allar spár
+4. Hrátt stig = meðal bita-fyrir-bæti (bpb) yfir allar spár
 
-Lægri er betra!
+**Lægri bpb er betra!**
+
 - ~8 bits/bæti = slembival (jafndreifing)
 - ~5 bits/bæti = grunnþjöppun (viðmiðun)
-- ~2 bits/bæti = gott málkvarðalíkan
-- ~1 bit/bæti = frábært þjöppunarárangur
+- ~2 bits/bæti = gott mállíkan
+- ~1.5 bits/bæti = frábær þjöppun
+
+### Normering á stigatöflu
+
+Hráa bpb stigið er normað fyrir stigatöfluna með:
+
+```
+                    2^(-s) - 2^(-s_max)
+normað(s) = max(0, ─────────────────────)
+                   2^(-s_min) - 2^(-s_max)
+```
+
+Þar sem:
+- `s` = bita-fyrir-bæti líkansins þíns
+- `s_max` = 5.0 (viðmiðunarstig)
+- `s_min` = besta stig í keppninni
+
+| Normað stig | Merking |
+|-------------|---------|
+| 0 | Sama og viðmiðun (5 bpb) |
+| 1 | Besta núverandi stig í keppninni |
 
 ---
 

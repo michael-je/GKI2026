@@ -2,7 +2,6 @@
 
 The government is preparing a digital time capsule to be buried at Þingvellir. You have been tasked with creating an Icelandic language model that will be written on a golden plate and stored in the time capsule. This model should preserve as much Icelandic linguistic knowledge as possible so it can be recovered later if the future takes a turn for the worst. However, the catch is that the golden plate can only hold one megabyte. You must gather text data and teach a small model as much general linguistic knowledge as you can. The model will then be evaluated on hidden data from Risamálheild to test its Icelandic capabilities. The future of the Icelandic language is in your hands!
 
-
 **Goal:** Build a model that predicts the next byte in a sequence of text. Lower bits-per-byte = better compression = higher score on the leaderboard.
 
 ---
@@ -87,28 +86,49 @@ Your model is evaluated on how well it predicts the next byte:
 1. For each position in the test data, your model receives the previous 512 bytes as context
 2. Your model returns logits (unnormalized probabilities) for each of the 256 possible next bytes
 3. We compute cross-entropy loss: `-log2(softmax(logits)[correct_byte])`
-4. Final score = average bits per byte across all predictions
+4. Raw score = average bits per byte (bpb) across all predictions
 
-**Lower is better!**
+**Lower bpb is better!**
+
 - ~8 bits/byte = random guessing (uniform distribution)
 - ~5 bits/byte = basic compression (baseline)
 - ~2 bits/byte = good language model
-- ~1 bit/byte = excellent compression
+- ~1.5 bits/byte = excellent compression
+
+### Leaderboard Normalization
+
+The raw bpb score is normalized for the leaderboard using:
+
+```
+                    2^(-s) - 2^(-s_max)
+normalized(s) = max(0, ─────────────────────)
+                    2^(-s_min) - 2^(-s_max)
+```
+
+Where:
+- `s` = your model's bits per byte
+- `s_max` = 5.0 (baseline score)
+- `s_min` = best score in the competition
+
+| Normalized Score | Meaning |
+|------------------|---------|
+| 0 | Same as baseline (5 bpb) |
+| 1 | Best current score in competition |
 
 ---
 
 ## Constraints
 
-| Constraint | Value |
-|------------|-------|
-| Max zip size | **1 MB** |
-| Max uncompressed | 50 MB |
-| Memory limit | 4 GB |
-| CPU | 2 cores (no GPU) |
-| Network | **None** - completely sandboxed |
-| Context window | 512 bytes max |
-| Batch size | 1024 contexts per call |
-| Time limit | 10 minutes total |
+| Constraint       | Value                           |
+| ---------------- | ------------------------------- |
+| Max zip size     | **1 MB**                        |
+| Max uncompressed | 50 MB                           |
+| Memory limit     | 4 GB                            |
+| CPU              | 2 cores (no GPU)                |
+| Network          | **None** - completely sandboxed |
+| Context window   | 512 bytes max                   |
+| Batch size       | 1024 contexts per call          |
+| Time limit       | 10 minutes total                |
 
 ---
 
@@ -116,18 +136,18 @@ Your model is evaluated on how well it predicts the next byte:
 
 The evaluation environment has these packages pre-installed:
 
-| Package | Version | Notes |
-|---------|---------|-------|
-| `torch` | 2.9.1 | **CPU-only** - main framework |
-| `transformers` | 4.57.6 | HuggingFace models |
-| `tensorflow-cpu` | 2.20.0 | TensorFlow (CPU) |
-| `jax` | 0.8.2 | JAX ecosystem |
-| `flax` | 0.12.2 | JAX ecosystem |
-| `numpy` | 2.4.1 | Numerical computing |
-| `scipy` | 1.17.0 | Scientific computing |
-| `safetensors` | 0.7.0 | Fast weight loading |
-| `datasets` | 4.5.0 | HuggingFace datasets |
-| `pyarrow` | 22.0.0 | Data serialization |
+| Package          | Version | Notes                         |
+| ---------------- | ------- | ----------------------------- |
+| `torch`          | 2.9.1   | **CPU-only** - main framework |
+| `transformers`   | 4.57.6  | HuggingFace models            |
+| `tensorflow-cpu` | 2.20.0  | TensorFlow (CPU)              |
+| `jax`            | 0.8.2   | JAX ecosystem                 |
+| `flax`           | 0.12.2  | JAX ecosystem                 |
+| `numpy`          | 2.4.1   | Numerical computing           |
+| `scipy`          | 1.17.0  | Scientific computing          |
+| `safetensors`    | 0.7.0   | Fast weight loading           |
+| `datasets`       | 4.5.0   | HuggingFace datasets          |
+| `pyarrow`        | 22.0.0  | Data serialization            |
 
 ### Need a different package?
 
@@ -161,6 +181,7 @@ python check_submission.py submission.zip
 ```
 
 This checks:
+
 - File size limits (1 MB compressed, 50 MB uncompressed)
 - ZIP format and structure
 - `model.py` exists with correct `Model` class
@@ -191,6 +212,7 @@ python check_submission.py
 ```
 
 **N-gram options:**
+
 - `--n 1` = Unigram (predicts based on global byte frequencies)
 - `--n 2` = Bigram (uses the previous byte as context)
 - `--n 3` = Trigram (uses the previous 2 bytes as context)
@@ -215,16 +237,16 @@ Higher n = more context = better predictions, but larger file size. Use `--min-c
 
 ## Files in This Repository
 
-| File | Description |
-|------|-------------|
-| `README.md` | This file |
-| `requirements.txt` | Python dependencies |
-| `create_dataset.py` | Downloads training data from HuggingFace |
-| `train_ngram.py` | Script to train n-gram model |
-| `create_submission.py` | Script to create submission.zip |
-| `check_submission.py` | Validates your submission before upload |
-| `submission/model.py` | Example model implementation |
-| `submission.zip` | Ready-to-upload unigram baseline |
+| File                   | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `README.md`            | This file                                |
+| `requirements.txt`     | Python dependencies                      |
+| `create_dataset.py`    | Downloads training data from HuggingFace |
+| `train_ngram.py`       | Script to train n-gram model             |
+| `create_submission.py` | Script to create submission.zip          |
+| `check_submission.py`  | Validates your submission before upload  |
+| `submission/model.py`  | Example model implementation             |
+| `submission.zip`       | Ready-to-upload unigram baseline         |
 
 ---
 

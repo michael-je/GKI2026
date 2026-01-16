@@ -98,7 +98,7 @@ Where:
 | 0 | Same as baseline |
 | > 0 | Better than baseline |
 | < 0 | Worse than baseline |
-| 1 | Perfect prediction |
+| 1 | Best current prediction in the competition |
 
 ## Getting Started
 
