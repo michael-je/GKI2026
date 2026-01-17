@@ -34,6 +34,74 @@ t-1    508    871    51    ...   225    11023  <- most recent
 
 ISO 8601 format: `"2025-01-15T08:00:00"`
 
+### Weather Forecast Format (optional)
+
+**Matches `weather_forecasts.csv` exactly - per-station data, no aggregation.**
+
+```
+Shape: (N_rows, 11) - N_rows varies by time window
+
+Columns (same order as training CSV):
+  0: date_time         - Forecast issue time (ISO string)
+  1: station_id        - Weather station ID (integer)
+  2: temperature       - Temperature forecast (°C)
+  3: windspeed         - Wind speed forecast (m/s)
+  4: cloud_coverage    - Cloud coverage (%)
+  5: gust              - Wind gust forecast (m/s) - mostly NaN
+  6: humidity          - Relative humidity forecast (%) - mostly NaN
+  7: winddirection     - Wind direction (compass string: N, NNA, A, etc.)
+  8: dewpoint          - Dew point temperature (°C)
+  9: rain_accumulated  - Accumulated rainfall (mm)
+  10: value_date       - Forecast valid time (ISO string)
+```
+
+### Weather History Format (optional)
+
+**Matches `weather_observations.csv` exactly - per-station data, no aggregation.**
+
+```
+Shape: (N_rows, 21) - N_rows varies by time window
+
+Columns (same order as training CSV):
+  0: stod              - Weather station ID (integer)
+  1: timi              - Observation timestamp (ISO string with timezone)
+  2: f                 - Wind speed (m/s)
+  3: fg                - Wind gust (m/s)
+  4: fsdev             - Wind speed standard deviation (~36% NaN)
+  5: d                 - Wind direction (degrees)
+  6: dsdev             - Wind direction standard deviation (~23% NaN)
+  7: t                 - Temperature (°C)
+  8: tx                - Maximum temperature (°C) (~12% NaN)
+  9: tn                - Minimum temperature (°C) (~12% NaN)
+  10: rh               - Relative humidity (%)
+  11: td               - Dew point temperature (°C)
+  12: p                - Atmospheric pressure (hPa) (~62% NaN)
+  13: r                - Precipitation (mm) (~35% NaN)
+  14: tg               - Ground temperature (°C) (~90% NaN)
+  15: tng              - Minimum ground temperature (°C) (~90% NaN)
+  16: _rescued_data    - Internal metadata (can be ignored)
+  17: value_date       - Data timestamp
+  18: lh_created_date  - Database metadata (can be ignored)
+  19: lh_modified_date - Database metadata (can be ignored)
+  20: lh_is_deleted    - Database metadata (can be ignored)
+```
+
+**Note:** Weather data has the SAME structure as your training CSVs - per-station rows, all columns included. Process it the same way you process the training data.
+
+### Handling Per-Station Weather Data
+
+Weather arrays have variable row counts (N = number of stations × number of hours).
+
+```python
+def filter_by_station(weather_history, station_id=1):
+    """Filter weather data to a single station."""
+    if weather_history is None:
+        return None
+    STOD = 0  # station ID column
+    mask = weather_history[:, STOD] == station_id
+    return weather_history[mask]
+```
+
 ## Output
 
 Your model returns predictions for all 45 sensors for the next 72 hours:
@@ -142,8 +210,8 @@ plt.show()
 Edit `model.py`. Your `predict()` function receives:
 - `sensor_history`: (672, 45) array
 - `timestamp`: ISO format string
-- `weather_forecast`: (72, n) array (optional)
-- `weather_history`: (672, n) array (optional)
+- `weather_forecast`: (N, 11) array (optional) - per-station data, same as training CSV
+- `weather_history`: (N, 21) array (optional) - per-station data, same as training CSV
 
 And must return a (72, 45) array.
 
