@@ -13,8 +13,9 @@ from pathlib import Path
 
 
 def create_submission():
-    submission_dir = Path("submission")
-    output_file = Path("submission.zip")
+    name = "submission_5gram"
+    submission_dir = Path(name)
+    output_file = Path(name+".zip")
 
     if not submission_dir.exists():
         print(f"ERROR: {submission_dir} directory not found!")

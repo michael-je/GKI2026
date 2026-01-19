@@ -22,6 +22,7 @@ import gzip
 import json
 from collections import defaultdict
 from pathlib import Path
+import time  
 
 
 def load_from_hf_dataset(data_path: Path, max_docs: int = None) -> list[bytes]:
@@ -154,6 +155,8 @@ def main():
     print(f"Min count: {args.min_count}")
     print()
 
+   
+    start_loading = time.time()
     # Load data
     if args.text_mode:
         texts = load_from_text_files(args.data)
@@ -162,10 +165,21 @@ def main():
 
     total_bytes = sum(len(t) for t in texts)
     print(f"Total: {total_bytes:,} bytes from {len(texts)} documents")
+    end_loading = time.time()
+    loading_time = end_loading - start_loading
+    print(f"Loading time: {loading_time:.2f} seconds ({loading_time/60:.2f} minutes)")
     print()
 
+    
+
+
+    start_training = time.time()
     # Train
     counts = train_ngram(texts, args.n, args.min_count)
+    end_training = time.time()
+    training_time = end_training - start_training
+    print(f"Training time: {training_time:.2f} seconds ({training_time/60:.2f} minutes)")
+
 
     # Save
     output_path = save_counts(counts, args.output)
